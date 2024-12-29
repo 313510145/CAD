@@ -82,7 +82,7 @@ void minimum_cover_finder::run() {
     unsigned int diff_count;
     std::vector<std::pair<std::string, bool>> temp_vector;
     for (unsigned int r = 0; r < this->bit_num; r++) {
-        for (unsigned int i = 0; i < this->implication_table.size() - r - 1; i++) {
+        for (unsigned int i = 0; i < this->bit_num - r; i++) {
             for (auto& j: this->implication_table[i]) {
                 for (auto& k: this->implication_table[i + 1]) {
                     temp_implicant.first = "";
