@@ -46,9 +46,8 @@ void minimum_cover_finder::input_information(std::istream& is) {
 }
 
 void minimum_cover_finder::output_prime_implicants(std::ostream& os) {
-    unsigned int temp_count = 0;
     os << ".p " << this->prime_implicant.size() << std::endl;
-    for (std::set<std::string>::reverse_iterator it = this->prime_implicant.rbegin(); it != this->prime_implicant.rend() && temp_count < 15; ++it) {
+    for (std::set<std::string>::reverse_iterator it = this->prime_implicant.rbegin(); it != this->prime_implicant.rend(); ++it) {
         for (unsigned int i = 0; i < this->bit_num; i++) {
             if ((*it)[i] == '0') {
                 os << static_cast<char>('A' + i) << "'";
@@ -57,7 +56,6 @@ void minimum_cover_finder::output_prime_implicants(std::ostream& os) {
                 os << static_cast<char>('A' + i);
             }
         }
-        temp_count++;
         os << "\n";
     }
     os << "\n"
