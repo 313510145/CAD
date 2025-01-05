@@ -24,7 +24,7 @@ OBJECT = $(patsubst $(SOURCE_DIRECTORY)/%.cpp, $(OBJECT_DIRECTORY)/%.o, $(SOURCE
 TESTCASE = $(wildcard testcase/*)
 
 TARGET = HW1
-GENERATOR = script/golden_generate
+GENERATOR = script/golden_generator
 
 all: $(TARGET)
 
