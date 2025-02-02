@@ -24,6 +24,11 @@ DEPENDENCY = $(patsubst $(SOURCE_DIRECTORY)/%.cpp, $(OBJECT_DIRECTORY)/%.d, $(SO
 
 TESTCASE = $(wildcard testcase/*)
 
+define GET_TESTCASE_BASE
+testcase_base=$$(basename $$testcase); \
+testcase_base=$${testcase_base%.*};
+endef
+
 TARGET = HW1
 GENERATOR = script/golden_generator
 
@@ -57,30 +62,26 @@ check: $(CPPCHECK)
 
 verify: run generate | $(VERIFICATION_DIRECTORY)
 	for testcase in $(TESTCASE); do \
-		testcase_base=$$(basename "$$testcase"); \
-		testcase_base=$${testcase_base%.*}; \
-		diff $(OUTPUT_DIRECTORY)/"$$testcase_base".out $(GOLDEN_DIRECTORY)/"$$testcase_base".gold | tee $(VERIFICATION_DIRECTORY)/"$$testcase_base".log; \
+		$(GET_TESTCASE_BASE); \
+		diff $(OUTPUT_DIRECTORY)/$${testcase_base}.out $(GOLDEN_DIRECTORY)/$${testcase_base}.gold | tee $(VERIFICATION_DIRECTORY)/$${testcase_base}.log; \
 	done
 
 run: $(TARGET) | $(OUTPUT_DIRECTORY)
 	for testcase in $(TESTCASE); do \
-		testcase_base=$$(basename "$$testcase"); \
-		testcase_base=$${testcase_base%.*}; \
-		./$(TARGET) "$$testcase" $(OUTPUT_DIRECTORY)/"$$testcase_base".out; \
+		$(GET_TESTCASE_BASE); \
+		./$(TARGET) $$testcase $(OUTPUT_DIRECTORY)/$${testcase_base}.out; \
 	done
 
 run_valgrind: $(TARGET) | $(MEMORY_DIRECTORY) $(OUTPUT_DIRECTORY)
 	for testcase in $(TESTCASE); do \
-		testcase_base=$$(basename "$$testcase"); \
-		testcase_base=$${testcase_base%.*}; \
-		$(CHECKCC) $(CHECKCC_FLAG) --log-file=$(MEMORY_DIRECTORY)/"$$testcase_base.log" ./$(TARGET) "$$testcase" $(OUTPUT_DIRECTORY)/"$$testcase_base".out; \
+		$(GET_TESTCASE_BASE); \
+		$(CHECKCC) $(CHECKCC_FLAG) --log-file=$(MEMORY_DIRECTORY)/$${testcase_base}.log ./$(TARGET) $$testcase $(OUTPUT_DIRECTORY)/$${testcase_base}.out; \
 	done
 
 generate: $(GENERATOR) | $(GOLDEN_DIRECTORY)
 	for testcase in $(TESTCASE); do \
-		testcase_base=$$(basename "$$testcase"); \
-		testcase_base=$${testcase_base%.*}; \
-		./$(GENERATOR) "$$testcase" $(GOLDEN_DIRECTORY)/"$$testcase_base".gold; \
+		$(GET_TESTCASE_BASE); \
+		./$(GENERATOR) $$testcase $(GOLDEN_DIRECTORY)/$${testcase_base}.gold; \
 	done
 
 clean:
