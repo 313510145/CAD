@@ -31,7 +31,7 @@ TESTCASE_VERILOG = $(wildcard $(TESTCASE_VERILOG_DIRECTORY)/*.v)
 
 define GET_TESTCASE_LIB_BASE
 testcase_lib_base=$$(basename $$testcase_lib); \
-testcase_lib_base=$${testcase_lib_base%.*}; \
+testcase_lib_base=$${testcase_lib_base%.*}
 endef
 
 define GET_TESTCASE_VERILOG_BASE
