@@ -18,17 +18,23 @@ VERIFICATION_DIRECTORY = verification
 
 SOURCE_DIRECTORY = source
 TESTCASE_DIRECTORY = testcase
+TESTCASE_LIB_DIRECTORY = $(TESTCASE_DIRECTORY)/library
+TESTCASE_VERILOG_DIRECTORY = $(TESTCASE_DIRECTORY)/verilog
+TESTCASE_PATTERN_DIRECTORY = $(TESTCASE_DIRECTORY)/pattern
 
 SOURCE = $(wildcard $(SOURCE_DIRECTORY)/*.cpp)
 OBJECT = $(patsubst $(SOURCE_DIRECTORY)/%.cpp, $(OBJECT_DIRECTORY)/%.o, $(SOURCE))
 DEPENDENCY = $(patsubst $(SOURCE_DIRECTORY)/%.cpp, $(OBJECT_DIRECTORY)/%.d, $(SOURCE))
 
-TESTCASE_LIB = $(wildcard $(TESTCASE_DIRECTORY)/library/*.lib)
-TESTCASE_VERILOG = $(wildcard $(TESTCASE_DIRECTORY)/verilog/*.v)
+TESTCASE_LIB = $(wildcard $(TESTCASE_LIB_DIRECTORY)/*.lib)
+TESTCASE_VERILOG = $(wildcard $(TESTCASE_VERILOG_DIRECTORY)/*.v)
 
-define GET_TESTCASE_BASE
+define GET_TESTCASE_LIB_BASE
 testcase_lib_base=$$(basename $$testcase_lib); \
 testcase_lib_base=$${testcase_lib_base%.*}; \
+endef
+
+define GET_TESTCASE_VERILOG_BASE
 testcase_verilog_base=$$(basename $$testcase_verilog); \
 testcase_verilog_base=$${testcase_verilog_base%.*}
 endef
@@ -67,7 +73,8 @@ check: $(CPPCHECK)
 verify: run generate | $(VERIFICATION_DIRECTORY)
 	for testcase_lib in $(TESTCASE_LIB); do \
 		for testcase_verilog in $(TESTCASE_VERILOG); do \
-			$(GET_TESTCASE_BASE); \
+			$(GET_TESTCASE_LIB_BASE); \
+			$(GET_TESTCASE_VERILOG_BASE); \
 			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.cap $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.cap | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.cap; \
 			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.del $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.del | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.del; \
 			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.pow $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.pow | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.pow; \
@@ -78,24 +85,25 @@ verify: run generate | $(VERIFICATION_DIRECTORY)
 run: $(TARGET) | $(OUTPUT_DIRECTORY)
 	for testcase_lib in $(TESTCASE_LIB); do \
 		for testcase_verilog in $(TESTCASE_VERILOG); do \
-			$(GET_TESTCASE_BASE); \
-			./$(TARGET) $$testcase_lib $$testcase_verilog $(TESTCASE_DIRECTORY)/pattern/$${testcase_verilog_base}.pat $(OUTPUT_DIRECTORY)/; \
+			$(GET_TESTCASE_VERILOG_BASE); \
+			./$(TARGET) $$testcase_lib $$testcase_verilog $(TESTCASE_PATTERN_DIRECTORY)/$${testcase_verilog_base}.pat $(OUTPUT_DIRECTORY)/; \
 		done \
 	done
 
 run_valgrind: $(TARGET) | $(MEMORY_DIRECTORY) $(OUTPUT_DIRECTORY)
 	for testcase_lib in $(TESTCASE_LIB); do \
 		for testcase_verilog in $(TESTCASE_VERILOG); do \
-			$(GET_TESTCASE_BASE); \
-			$(CHECKCC) $(CHECKCC_FLAG) --log-file=$(MEMORY_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.log ./$(TARGET) $$testcase_lib $$testcase_verilog $(TESTCASE_DIRECTORY)/pattern/$${testcase_verilog_base}.pat $(OUTPUT_DIRECTORY)/; \
+			$(GET_TESTCASE_LIB_BASE); \
+			$(GET_TESTCASE_VERILOG_BASE); \
+			$(CHECKCC) $(CHECKCC_FLAG) --log-file=$(MEMORY_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.log ./$(TARGET) $$testcase_lib $$testcase_verilog $(TESTCASE_PATTERN_DIRECTORY)/$${testcase_verilog_base}.pat $(OUTPUT_DIRECTORY)/; \
 		done \
 	done
 
 generate: $(GENERATOR) | $(GOLDEN_DIRECTORY)
 	for testcase_lib in $(TESTCASE_LIB); do \
 		for testcase_verilog in $(TESTCASE_VERILOG); do \
-			$(GET_TESTCASE_BASE); \
-			./$(GENERATOR) $$testcase_lib $$testcase_verilog $(TESTCASE_DIRECTORY)/pattern/$${testcase_verilog_base}.pat $(GOLDEN_DIRECTORY)/; \
+			$(GET_TESTCASE_VERILOG_BASE); \
+			./$(GENERATOR) $$testcase_lib $$testcase_verilog $(TESTCASE_PATTERN_DIRECTORY)/$${testcase_verilog_base}.pat $(GOLDEN_DIRECTORY)/; \
 		done \
 	done
 
