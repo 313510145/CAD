@@ -19,41 +19,13 @@ void static_analyzer::input_lib(std::istream& is) {
             }
         }
         table_input = match.suffix();
-        std::string cell_content = "";
-        int brace_count = 1;
-        while (table_input.size() > 0) {
-            char c = table_input[0];
-            table_input = table_input.substr(1);
-            if (c == '{') {
-                ++brace_count;
-            }
-            else if (c == '}') {
-                --brace_count;
-            }
-            if (brace_count <= 0) {
-                break;
-            }
-            cell_content = cell_content + c;
-        }
+        std::string cell_content;
+        find_closing_brace(table_input, cell_content);
         while (std::regex_search(cell_content, match, std::regex(R"(pin\s*\(\s*(\w+)\s*\)\s*\{)"))) {
             std::string pin_name = match[1];
             cell_content = match.suffix();
-            std::string pin_content = "";
-            brace_count = 1;
-            while (cell_content.size() > 0) {
-                char c = cell_content[0];
-                cell_content = cell_content.substr(1);
-                if (c == '{') {
-                    ++brace_count;
-                }
-                else if (c == '}') {
-                    --brace_count;
-                }
-                if (brace_count <= 0) {
-                    break;
-                }
-                pin_content = pin_content + c;
-            }
+            std::string pin_content;
+            find_closing_brace(cell_content, pin_content);
             bool is_output;
             while (std::regex_search(pin_content, match, std::regex(R"(direction\s*:\s*(\w+)\s*;)"))) {
                 is_output = match[1] == "output";
@@ -68,42 +40,14 @@ void static_analyzer::input_lib(std::istream& is) {
             }
             while (std::regex_search(pin_content, match, std::regex(R"(internal_power\s*\(\s*\)\s*\{)"))) {
                 pin_content = match.suffix();
-                std::string internal_power_content = "";
-                brace_count = 1;
-                while (pin_content.size() > 0) {
-                    char c = pin_content[0];
-                    pin_content = pin_content.substr(1);
-                    if (c == '{') {
-                        ++brace_count;
-                    }
-                    else if (c == '}') {
-                        --brace_count;
-                    }
-                    if (brace_count <= 0) {
-                        break;
-                    }
-                    internal_power_content = internal_power_content + c;
-                }
+                std::string internal_power_content;
+                find_closing_brace(pin_content, internal_power_content);
                 while (std::regex_search(internal_power_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
                     std::string power_name = match[1];
                     std::string table_name = match[2];
                     internal_power_content = match.suffix();
-                    std::string power_content = "";
-                    brace_count = 1;
-                    while (internal_power_content.size() > 0) {
-                        char c = internal_power_content[0];
-                        internal_power_content = internal_power_content.substr(1);
-                        if (c == '{') {
-                            ++brace_count;
-                        }
-                        else if (c == '}') {
-                            --brace_count;
-                        }
-                        if (brace_count <= 0) {
-                            break;
-                        }
-                        power_content = power_content + c;
-                    }
+                    std::string power_content;
+                    find_closing_brace(internal_power_content, power_content);
                     std::vector<std::vector<double>> table_values;
                     std::vector<double> temp_v;
                     table* t = this->name_to_table[table_name];
@@ -121,42 +65,14 @@ void static_analyzer::input_lib(std::istream& is) {
             }
             while (std::regex_search(pin_content, match, std::regex(R"(timing\s*\(\s*\)\s*\{)"))) {
                 pin_content = match.suffix();
-                std::string timing_content = "";
-                brace_count = 1;
-                while (pin_content.size() > 0) {
-                    char c = pin_content[0];
-                    pin_content = pin_content.substr(1);
-                    if (c == '{') {
-                        ++brace_count;
-                    }
-                    else if (c == '}') {
-                        --brace_count;
-                    }
-                    if (brace_count <= 0) {
-                        break;
-                    }
-                    timing_content = timing_content + c;
-                }
+                std::string timing_content;
+                find_closing_brace(pin_content, timing_content);
                 while (std::regex_search(timing_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
                     std::string timing_name = match[1];
                     std::string table_name = match[2];
                     timing_content = match.suffix();
-                    std::string timing = "";
-                    brace_count = 1;
-                    while (timing_content.size() > 0) {
-                        char c = timing_content[0];
-                        timing_content = timing_content.substr(1);
-                        if (c == '{') {
-                            ++brace_count;
-                        }
-                        else if (c == '}') {
-                            --brace_count;
-                        }
-                        if (brace_count <= 0) {
-                            break;
-                        }
-                        timing = timing + c;
-                    }
+                    std::string timing;
+                    find_closing_brace(timing_content, timing);
                     std::vector<std::vector<double>> table_values;
                     std::vector<double> temp_v;
                     table* t = this->name_to_table[table_name];
@@ -621,5 +537,22 @@ void static_analyzer::recursive_wire(const wire* w) {
                 i.second->set_value(value);
             }
         }
+    }
+}
+
+void static_analyzer::find_closing_brace(const std::string& str, std::string& content) {
+    content = "";
+    int brace_count = 1;
+    for (auto c: str) {
+        if (c == '{') {
+            ++brace_count;
+        }
+        else if (c == '}') {
+            --brace_count;
+        }
+        if (brace_count <= 0) {
+            break;
+        }
+        content = content + c;
     }
 }
