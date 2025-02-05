@@ -105,18 +105,10 @@ void cell::set_output_capacitance(const double& output_capacitance_in) {
 }
 
 void cell::set_output_transition(const double& output_transition_in) {
-    if (output_transition_in < 0) {
-        this->output_transition = 0;
-        return;
-    }
     this->output_transition = output_transition_in;
 }
 
 void cell::set_delay(const double& delay_in) {
-    if (delay_in < 0) {
-        this->delay = 0;
-        return;
-    }
     this->delay = delay_in;
 }
 
@@ -125,10 +117,6 @@ void cell::set_total_delay(const double& total_delay_in) {
 }
 
 void cell::set_internal_power(const double& internal_power_in) {
-    if (internal_power_in < 0) {
-        this->internal_power = 0;
-        return;
-    }
     this->internal_power = internal_power_in;
 }
 

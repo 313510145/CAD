@@ -45,6 +45,9 @@ double table::get_table_value(const std::string& type, const std::string& cell_n
     double q11_12 = q11 + (q12 - q11) * (total_output_net_capacitance_in - this->total_output_net_capacitance[y1]) / (this->total_output_net_capacitance[y2] - this->total_output_net_capacitance[y1]);
     double q21_22 = q21 + (q22 - q21) * (total_output_net_capacitance_in - this->total_output_net_capacitance[y1]) / (this->total_output_net_capacitance[y2] - this->total_output_net_capacitance[y1]);
     double result = q11_12 + (q21_22 - q11_12) * (input_transition_time_in - this->input_transition_time[x1]) / (this->input_transition_time[x2] - this->input_transition_time[x1]);
+    if (result < 0) {
+        return 0;
+    }
     return result;
 }
 
