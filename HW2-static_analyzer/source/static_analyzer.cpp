@@ -540,7 +540,7 @@ void static_analyzer::recursive_wire(const wire* w) {
     }
 }
 
-void static_analyzer::find_closing_brace(const std::string& str, std::string& content) {
+void static_analyzer::find_closing_brace(std::string& str, std::string& content) {
     content = "";
     int brace_count = 1;
     for (auto c: str) {
@@ -551,6 +551,7 @@ void static_analyzer::find_closing_brace(const std::string& str, std::string& co
             --brace_count;
         }
         if (brace_count <= 0) {
+            str = str.substr(content.length() + 1);
             break;
         }
         content = content + c;

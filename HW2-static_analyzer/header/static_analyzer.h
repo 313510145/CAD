@@ -19,7 +19,7 @@ class static_analyzer {
         void pre_processing_lib(std::string& str);
         void pre_processing_verilog(std::string& str);
         void recursive_wire(const wire* w);
-        static void find_closing_brace(const std::string& str, std::string& content);
+        static void find_closing_brace(std::string& str, std::string& content);
         std::string name;
         std::pair<double, std::string> time_unit, voltage_unit, current_unit, capacitive_load_unit;
         std::vector<table*> table_list;
