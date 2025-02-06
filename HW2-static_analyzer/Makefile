@@ -1,7 +1,7 @@
-.PHONY: all check verify run run_valgrind generate clean
+.PHONY: all check run run_valgrind clean
 
 CXX = g++
-CXX_FLAG = -Wall -Wextra -std=c++14 -g
+CXX_FLAG = -Wall -Wextra -std=c++14 -g -static
 INCLUDE_PATH = -Iheader
 
 CHECKCC = valgrind
@@ -10,11 +10,9 @@ CHECKCC_FLAG = --leak-check=full --show-leak-kinds=all --track-origins=yes --ver
 CPPCHECK = ../../cppcheck-2.13.0/cppcheck
 CPPCHECK_FLAG = --enable=all --inconclusive --suppress=missingIncludeSystem
 
-GOLDEN_DIRECTORY = golden
 MEMORY_DIRECTORY = memory
 OBJECT_DIRECTORY = object
 OUTPUT_DIRECTORY = output
-VERIFICATION_DIRECTORY = verification
 
 SOURCE_DIRECTORY = source
 TESTCASE_DIRECTORY = testcase
@@ -40,12 +38,8 @@ testcase_verilog_base=$${testcase_verilog_base%.*}
 endef
 
 TARGET = HW2
-GENERATOR = script/golden_generator
 
 all: $(TARGET)
-
-$(GOLDEN_DIRECTORY):
-	mkdir $(GOLDEN_DIRECTORY)
 
 $(MEMORY_DIRECTORY):
 	mkdir $(MEMORY_DIRECTORY)
@@ -55,9 +49,6 @@ $(OBJECT_DIRECTORY):
 
 $(OUTPUT_DIRECTORY):
 	mkdir $(OUTPUT_DIRECTORY)
-
-$(VERIFICATION_DIRECTORY):
-	mkdir $(VERIFICATION_DIRECTORY)
 
 $(TARGET): main.cpp $(OBJECT)
 	$(CXX) $(CXX_FLAG) $(INCLUDE_PATH) $^ -o $@
@@ -69,18 +60,6 @@ $(OBJECT_DIRECTORY)/%.o: $(SOURCE_DIRECTORY)/%.cpp | $(OBJECT_DIRECTORY)
 
 check: $(CPPCHECK)
 	./$(CPPCHECK) $(CPPCHECK_FLAG) $(INCLUDE_PATH) .
-
-verify: run generate | $(VERIFICATION_DIRECTORY)
-	for testcase_lib in $(TESTCASE_LIB); do \
-		for testcase_verilog in $(TESTCASE_VERILOG); do \
-			$(GET_TESTCASE_LIB_BASE); \
-			$(GET_TESTCASE_VERILOG_BASE); \
-			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.cap $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.cap | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.cap; \
-			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.del $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.del | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.del; \
-			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.pow $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.pow | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.pow; \
-			diff $(OUTPUT_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.tog $(GOLDEN_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.tog | tee $(VERIFICATION_DIRECTORY)/$${testcase_lib_base}_$${testcase_verilog_base}.tog; \
-		done \
-	done
 
 run: $(TARGET) | $(OUTPUT_DIRECTORY)
 	for testcase_lib in $(TESTCASE_LIB); do \
@@ -99,13 +78,5 @@ run_valgrind: $(TARGET) | $(MEMORY_DIRECTORY) $(OUTPUT_DIRECTORY)
 		done \
 	done
 
-generate: $(GENERATOR) | $(GOLDEN_DIRECTORY)
-	for testcase_lib in $(TESTCASE_LIB); do \
-		for testcase_verilog in $(TESTCASE_VERILOG); do \
-			$(GET_TESTCASE_VERILOG_BASE); \
-			./$(GENERATOR) $$testcase_lib $$testcase_verilog $(TESTCASE_PATTERN_DIRECTORY)/$${testcase_verilog_base}.pat $(GOLDEN_DIRECTORY)/; \
-		done \
-	done
-
 clean:
-	rm -rf $(TARGET) $(GOLDEN_DIRECTORY) $(MEMORY_DIRECTORY) $(OBJECT_DIRECTORY) $(OUTPUT_DIRECTORY) $(VERIFICATION_DIRECTORY)
+	rm -rf $(TARGET) $(MEMORY_DIRECTORY) $(OBJECT_DIRECTORY) $(OUTPUT_DIRECTORY)
