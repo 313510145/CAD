@@ -1,0 +1,23 @@
+//Verilog-AMS HDL for "ADC", "comparator" "verilogams"
+
+`include "constants.vams"
+`include "disciplines.vams"
+
+module comparator(in_pos, in_neg, out);
+
+input in_pos, in_neg;
+output reg out;
+
+electrical in_pos, in_neg;
+ddiscrete out;
+
+always begin
+	@(cross(V(in_pos) - V(in_neg), +1)) begin
+		out = 1;
+	end
+	@(cross(V(in_pos) - V(in_neg), -1)) begin
+		out = 0;
+	end
+end
+
+endmodule
