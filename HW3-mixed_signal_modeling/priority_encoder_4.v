@@ -1,6 +1,6 @@
-//Verilog HDL for "ADC", "priority_encoder_3" "functional"
+//Verilog HDL for "ADC", "priority_encoder_4" "functional"
 
-module priority_encoder_3(
+module priority_encoder_4(
 	in_15, in_14, in_13, in_12, in_11, in_10, in_9, in_8, in_7, in_6, in_5, in_4, in_3, in_2, in_1, in_0,
 	out_3, out_2, out_1, out_0
 );
