@@ -20,12 +20,12 @@ void static_analyzer::input_lib(std::istream& is) {
         }
         table_input = match.suffix();
         std::string cell_content;
-        find_closing_brace(table_input, cell_content);
+        find_closing_pair(table_input, cell_content);
         while (std::regex_search(cell_content, match, std::regex(R"(pin\s*\(\s*(\w+)\s*\)\s*\{)"))) {
             std::string pin_name = match[1];
             cell_content = match.suffix();
             std::string pin_content;
-            find_closing_brace(cell_content, pin_content);
+            find_closing_pair(cell_content, pin_content);
             bool is_output;
             while (std::regex_search(pin_content, match, std::regex(R"(direction\s*:\s*(\w+)\s*;)"))) {
                 is_output = match[1] == "output";
@@ -38,27 +38,28 @@ void static_analyzer::input_lib(std::istream& is) {
                 }
                 pin_content = match.prefix().str() + match.suffix().str();
             }
+            std::regex value_pattern(R"([\d\.]+)");
+            std::sregex_iterator value_end;
             while (std::regex_search(pin_content, match, std::regex(R"(internal_power\s*\(\s*\)\s*\{)"))) {
                 pin_content = match.suffix();
                 std::string internal_power_content;
-                find_closing_brace(pin_content, internal_power_content);
+                find_closing_pair(pin_content, internal_power_content);
                 while (std::regex_search(internal_power_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
                     std::string power_name = match[1];
                     std::string table_name = match[2];
                     internal_power_content = match.suffix();
                     std::string power_content;
-                    find_closing_brace(internal_power_content, power_content);
+                    find_closing_pair(internal_power_content, power_content);
                     std::vector<std::vector<double>> table_values;
                     std::vector<double> temp_v;
                     table* t = this->name_to_table[table_name];
-                    while (std::regex_search(power_content, match, std::regex(R"([\d\.]+)"))) {
-                        std::string values = match[0];
-                        temp_v.push_back(std::stod(values));
+                    auto value_iter = std::sregex_iterator(power_content.begin(), power_content.end(), value_pattern);
+                    for (std::sregex_iterator i = value_iter; i != value_end; ++i) {
+                        temp_v.push_back(std::stod(i->str()));
                         if (temp_v.size() == t->get_total_output_net_capacitance_size()) {
                             table_values.push_back(temp_v);
                             temp_v.clear();
                         }
-                        power_content = match.suffix();
                     }
                     t->set_table(cell_name, power_name, table_values);
                 }
@@ -66,24 +67,23 @@ void static_analyzer::input_lib(std::istream& is) {
             while (std::regex_search(pin_content, match, std::regex(R"(timing\s*\(\s*\)\s*\{)"))) {
                 pin_content = match.suffix();
                 std::string timing_content;
-                find_closing_brace(pin_content, timing_content);
+                find_closing_pair(pin_content, timing_content);
                 while (std::regex_search(timing_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
                     std::string timing_name = match[1];
                     std::string table_name = match[2];
                     timing_content = match.suffix();
                     std::string timing;
-                    find_closing_brace(timing_content, timing);
+                    find_closing_pair(timing_content, timing);
                     std::vector<std::vector<double>> table_values;
                     std::vector<double> temp_v;
                     table* t = this->name_to_table[table_name];
-                    while (std::regex_search(timing, match, std::regex(R"([\d\.]+)"))) {
-                        std::string values = match[0];
-                        temp_v.push_back(std::stod(values));
+                    auto value_iter = std::sregex_iterator(timing.begin(), timing.end(), value_pattern);
+                    for (std::sregex_iterator i = value_iter; i != value_end; ++i) {
+                        temp_v.push_back(std::stod(i->str()));
                         if (temp_v.size() == t->get_total_output_net_capacitance_size()) {
                             table_values.push_back(temp_v);
                             temp_v.clear();
                         }
-                        timing = match.suffix();
                     }
                     t->set_table(cell_name, timing_name, table_values);
                 }
@@ -99,20 +99,23 @@ void static_analyzer::input_verilog(std::istream& is) {
     buffer.clear();
     buffer.str("");
     pre_processing_verilog(netlist);
-    buffer << netlist;
-    std::string cell_name;
-    std::string port, wire_name;
-    while (buffer >> netlist) {
-        buffer >> cell_name;
+    std::smatch match;
+    while (std::regex_search(netlist, match, std::regex(R"((\w+)\s+(\w+)\s*\()"))) {
+        std::string cell_type = match[1];
+        std::string cell_name = match[2];
         cell* c = new cell();
-        c->set_model_name(netlist);
+        c->set_model_name(cell_type);
         c->set_name(cell_name);
-        c->set_type(this->name_to_cell_type[netlist]);
-        unsigned int port_size = this->table_list[0]->get_port_information_size(netlist);
-        for (unsigned int i = 0; i < port_size; ++i) {
-            buffer >> port >> wire_name;
+        c->set_type(this->name_to_cell_type[cell_type]);
+        netlist = match.suffix();
+        std::string cell_content;
+        find_closing_pair(netlist, cell_content);
+        while (std::regex_search(cell_content, match, std::regex(R"(\.(\w+)\s*\(\s*(\w+)\s*\))"))) {
+            std::string port = match[1];
+            std::string wire_name = match[2];
+            cell_content = match.suffix();
             wire* w = this->name_to_wire[wire_name];
-            bool is_output = this->table_list[0]->get_port_is_output(netlist, port);
+            bool is_output = this->table_list[0]->get_port_is_output(cell_type, port);
             if (is_output) {
                 c->set_output_port_wire(port, w);
                 w->set_input_cell_port(c, port);
@@ -127,32 +130,34 @@ void static_analyzer::input_verilog(std::istream& is) {
 }
 
 void static_analyzer::input_pattern(std::istream& is) {
-    std::string temp;
-    std::stringstream ss;
-    getline(is, temp);
-    ss << temp;
-    ss >> temp;
-    this->PI_list.clear();
-    while (ss >> temp) {
-        size_t comma = temp.find(",");
-        if (comma != std::string::npos) {
-            temp.resize(comma);
+    std::stringstream buffer;
+    buffer << is.rdbuf();
+    std::string pattern_str = buffer.str();
+    buffer.clear();
+    buffer.str("");
+    std::smatch match;
+    std::sregex_iterator pins_end;
+    while (std::regex_search(pattern_str, match, std::regex(R"(input\s+([^\n]+))"))) {
+        this->PI_list.clear();
+        std::string inputs = match[1];
+        std::regex pin_regex(R"(\b(\w+)\b)");
+        auto pins_begin = std::sregex_iterator(inputs.begin(), inputs.end(), pin_regex);
+        for (std::sregex_iterator i = pins_begin; i != pins_end; ++i) {
+            wire* w = this->name_to_wire[(*i).str()];
+            this->PI_list.push_back(w);
         }
-        this->PI_list.push_back(this->name_to_wire[temp]);
+        pattern_str = match.suffix();
     }
-    ss.clear();
-    ss.str("");
-    getline(is, temp);
-    while (temp.find(".end") == std::string::npos) {
-        ss << temp;
-        std::vector<int> pattern_line;
-        while (ss >> temp) {
-            pattern_line.push_back(stoi(temp));
+    pattern_str = std::regex_replace(pattern_str, std::regex(R"(.end[^]*)"), "");
+    std::vector<int> pattern_line;
+    std::regex bit_regex(R"([01])");
+    auto bit_begin = std::sregex_iterator(pattern_str.begin(), pattern_str.end(), bit_regex);
+    for (std::sregex_iterator i = bit_begin; i != pins_end; ++i) {
+        pattern_line.push_back(stoi((*i).str()));
+        if (pattern_line.size() == this->PI_list.size()) {
+            this->pattern.push_back(pattern_line);
+            pattern_line.clear();
         }
-        ss.clear();
-        ss.str("");
-        this->pattern.push_back(pattern_line);
-        getline(is, temp);
     }
 }
 
@@ -395,7 +400,7 @@ void static_analyzer::pre_processing_lib(std::string& str) {
         }
         this->table_list.push_back(t);
         this->name_to_table[t->get_name()] = t;
-        str = match.prefix().str() + match.suffix().str();
+        str = match.suffix();
     }
 }
 
@@ -413,7 +418,7 @@ void static_analyzer::pre_processing_verilog(std::string& str) {
             w->set_name((*i).str());
             this->name_to_wire[w->get_name()] = w;
         }
-        str = match.prefix().str() + match.suffix().str();
+        str = match.suffix();
     }
     while (std::regex_search(str, match, std::regex(R"(input\s+([^;]+);)"))) {
         std::string inputs = match[1];
@@ -447,7 +452,6 @@ void static_analyzer::pre_processing_verilog(std::string& str) {
         str = match.prefix().str() + match.suffix().str();
     }
     str = std::regex_replace(str, std::regex(R"(endmodule[^]*)"), "");
-    str = std::regex_replace(str, std::regex(R"([().,;])"), " ");
 }
 
 void static_analyzer::recursive_wire(const wire* w) {
@@ -540,14 +544,16 @@ void static_analyzer::recursive_wire(const wire* w) {
     }
 }
 
-void static_analyzer::find_closing_brace(std::string& str, std::string& content) {
+void static_analyzer::find_closing_pair(std::string& str, std::string& content) {
     content = "";
+    std::string opening = "([{";
+    std::string closing = ")]}";
     int brace_count = 1;
     for (auto c: str) {
-        if (c == '{') {
+        if (opening.find(c) != std::string::npos) {
             ++brace_count;
         }
-        else if (c == '}') {
+        else if (closing.find(c) != std::string::npos) {
             --brace_count;
         }
         if (brace_count <= 0) {

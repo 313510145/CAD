@@ -40,7 +40,8 @@ int main(int argc, char** argv) {
     if (last_dot != std::string::npos) {
         file_name.resize(last_dot);
     }
-    std::string output_name = argv[4] + lib_name + "_" + file_name + ".cap";
+    std::string output_directory_name = argv[4];
+    std::string output_name = output_directory_name + argv[0] + "_" + lib_name + "_" + file_name + ".cap";
     std::ofstream output_file(output_name);
     if (!output_file) {
         std::cout << "Cannot open the output file: " << output_name << std::endl;
@@ -57,9 +58,9 @@ int main(int argc, char** argv) {
     }
     sa->input_pattern(input_file);
     input_file.close();
-    output_name = argv[4] + lib_name + "_" + file_name + ".del";
-    std::string output_power_name = argv[4] + lib_name + "_" + file_name + ".pow";
-    std::string output_toggle_name = argv[4] + lib_name + "_" + file_name + ".tog";
+    output_name = output_directory_name + argv[0] + "_" + lib_name + "_" + file_name + ".del";
+    std::string output_power_name = output_directory_name + argv[0] + "_" + lib_name + "_" + file_name + ".pow";
+    std::string output_toggle_name = output_directory_name + argv[0] + "_" + lib_name + "_" + file_name + ".tog";
     output_file.open(output_name);
     if (!output_file) {
         std::cout << "Cannot open the output file: " << output_name << std::endl;
