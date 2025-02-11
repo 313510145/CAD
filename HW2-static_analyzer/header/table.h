@@ -12,6 +12,7 @@ class table {
         double get_port_capacitance(const std::string& cell_name, const std::string& port_name) const;
         unsigned int get_port_information_size(const std::string& cell_name) const;
         unsigned int get_total_output_net_capacitance_size() const;
+        unsigned int get_input_transition_time_size() const;
         double get_table_value(const std::string& type, const std::string& cell_name, const double& input_transition_time_in, const double& total_output_net_capacitance_in) const;
         void set_name(const std::string& name_in);
         void add_port_information(std::string cell_name_in, const std::string& port_name_in, std::pair<bool, double> is_output_capacitance_in);

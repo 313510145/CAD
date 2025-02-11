@@ -23,6 +23,10 @@ unsigned int table::get_total_output_net_capacitance_size() const {
     return this->total_output_net_capacitance.size();
 }
 
+unsigned int table::get_input_transition_time_size() const {
+    return this->input_transition_time.size();
+}
+
 double table::get_table_value(const std::string& type, const std::string& cell_name, const double& input_transition_time_in, const double& total_output_net_capacitance_in) const {
     const std::vector<std::vector<double>>* t = &(this->table_type_map.at(type)->at(this->cell_name_index_map.at(cell_name)));
     unsigned int x1, x2, y1, y2;
