@@ -38,54 +38,56 @@ void static_analyzer::input_lib(std::istream& is) {
                 }
                 pin_content = match.prefix().str() + match.suffix().str();
             }
-            std::regex value_pattern(R"([\d\.]+)");
-            std::sregex_iterator value_end;
-            while (std::regex_search(pin_content, match, std::regex(R"(internal_power\s*\(\s*\)\s*\{)"))) {
-                pin_content = match.suffix();
-                std::string internal_power_content;
-                find_closing_pair(pin_content, internal_power_content);
-                while (std::regex_search(internal_power_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
-                    std::string power_name = match[1];
-                    std::string table_name = match[2];
-                    internal_power_content = match.suffix();
-                    std::string power_content;
-                    find_closing_pair(internal_power_content, power_content);
-                    std::vector<std::vector<double>> table_values;
-                    std::vector<double> temp_v;
-                    table* t = this->name_to_table[table_name];
-                    auto value_iter = std::sregex_iterator(power_content.begin(), power_content.end(), value_pattern);
-                    for (std::sregex_iterator i = value_iter; i != value_end; ++i) {
-                        temp_v.push_back(std::stod(i->str()));
-                        if (temp_v.size() == t->get_total_output_net_capacitance_size()) {
-                            table_values.push_back(temp_v);
-                            temp_v.clear();
+            if (is_output) {
+                std::regex value_pattern(R"([\d\.]+)");
+                std::sregex_iterator value_end;
+                while (std::regex_search(pin_content, match, std::regex(R"(internal_power\s*\(\s*\)\s*\{)"))) {
+                    pin_content = match.suffix();
+                    std::string internal_power_content;
+                    find_closing_pair(pin_content, internal_power_content);
+                    while (std::regex_search(internal_power_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
+                        std::string power_name = match[1];
+                        std::string table_name = match[2];
+                        internal_power_content = match.suffix();
+                        std::string power_content;
+                        find_closing_pair(internal_power_content, power_content);
+                        std::vector<std::vector<double>> table_values;
+                        std::vector<double> temp_v;
+                        table* t = this->name_to_table[table_name];
+                        auto value_iter = std::sregex_iterator(power_content.begin(), power_content.end(), value_pattern);
+                        for (std::sregex_iterator i = value_iter; i != value_end; ++i) {
+                            temp_v.push_back(std::stod(i->str()));
+                            if (temp_v.size() == t->get_total_output_net_capacitance_size()) {
+                                table_values.push_back(temp_v);
+                                temp_v.clear();
+                            }
                         }
+                        t->set_table(cell_name, power_name, table_values);
                     }
-                    t->set_table(cell_name, power_name, table_values);
                 }
-            }
-            while (std::regex_search(pin_content, match, std::regex(R"(timing\s*\(\s*\)\s*\{)"))) {
-                pin_content = match.suffix();
-                std::string timing_content;
-                find_closing_pair(pin_content, timing_content);
-                while (std::regex_search(timing_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
-                    std::string timing_name = match[1];
-                    std::string table_name = match[2];
-                    timing_content = match.suffix();
-                    std::string timing;
-                    find_closing_pair(timing_content, timing);
-                    std::vector<std::vector<double>> table_values;
-                    std::vector<double> temp_v;
-                    table* t = this->name_to_table[table_name];
-                    auto value_iter = std::sregex_iterator(timing.begin(), timing.end(), value_pattern);
-                    for (std::sregex_iterator i = value_iter; i != value_end; ++i) {
-                        temp_v.push_back(std::stod(i->str()));
-                        if (temp_v.size() == t->get_total_output_net_capacitance_size()) {
-                            table_values.push_back(temp_v);
-                            temp_v.clear();
+                while (std::regex_search(pin_content, match, std::regex(R"(timing\s*\(\s*\)\s*\{)"))) {
+                    pin_content = match.suffix();
+                    std::string timing_content;
+                    find_closing_pair(pin_content, timing_content);
+                    while (std::regex_search(timing_content, match, std::regex(R"((\w+)\s*\(\s*(\w+)\s*\)\s*\{)"))) {
+                        std::string timing_name = match[1];
+                        std::string table_name = match[2];
+                        timing_content = match.suffix();
+                        std::string timing;
+                        find_closing_pair(timing_content, timing);
+                        std::vector<std::vector<double>> table_values;
+                        std::vector<double> temp_v;
+                        table* t = this->name_to_table[table_name];
+                        auto value_iter = std::sregex_iterator(timing.begin(), timing.end(), value_pattern);
+                        for (std::sregex_iterator i = value_iter; i != value_end; ++i) {
+                            temp_v.push_back(std::stod(i->str()));
+                            if (temp_v.size() == t->get_total_output_net_capacitance_size()) {
+                                table_values.push_back(temp_v);
+                                temp_v.clear();
+                            }
                         }
+                        t->set_table(cell_name, timing_name, table_values);
                     }
-                    t->set_table(cell_name, timing_name, table_values);
                 }
             }
         }
