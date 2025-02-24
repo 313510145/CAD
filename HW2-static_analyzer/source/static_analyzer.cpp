@@ -491,7 +491,7 @@ void static_analyzer::recursive_wire(const wire* w) {
             }
             value = (c.first->get_inversion()) ? INV_TABLE[value] : value;
             switch (value) {
-                case S0:
+                case FALL:
                     c.first->set_delay(this->table_now->get_table_value("cell_fall", c.first->get_model_name(), input_transition, c.first->get_output_capacitance()));
                     c.first->set_total_delay(total_delay + c.first->get_delay());
                     if (c.first->get_transition() != FALL) {
@@ -503,7 +503,7 @@ void static_analyzer::recursive_wire(const wire* w) {
                     c.first->set_internal_power(this->table_now->get_table_value("fall_power", c.first->get_model_name(), input_transition, c.first->get_output_capacitance()));
                     this->total_power += c.first->get_internal_power();
                     break;
-                case S1:
+                case RISE:
                     c.first->set_delay(this->table_now->get_table_value("cell_rise", c.first->get_model_name(), input_transition, c.first->get_output_capacitance()));
                     c.first->set_total_delay(total_delay + c.first->get_delay());
                     if (c.first->get_transition() != RISE) {

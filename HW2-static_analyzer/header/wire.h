@@ -5,8 +5,6 @@
 #include <string>
 #include <unordered_map>
 
-enum VALUE {S0, S1, X};
-
 class cell;
 
 class wire {

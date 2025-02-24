@@ -42,7 +42,7 @@ void wire::set_value(const int& value_in) {
 
 wire::wire() {
     this->name = "";
-    this->value = X;
+    this->value = UNDEFINED;
 }
 
 wire::~wire() {}
