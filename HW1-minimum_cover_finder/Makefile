@@ -24,7 +24,7 @@ TESTCASE = $(wildcard testcase/*)
 
 define GET_TESTCASE_BASE
 testcase_base=$$(basename $$testcase); \
-testcase_base=$${testcase_base%.*};
+testcase_base=$${testcase_base%.*}
 endef
 
 TARGET = HW1
